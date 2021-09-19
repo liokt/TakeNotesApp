@@ -12,6 +12,8 @@ import com.example.lio.takenoteapp.R
 import com.example.lio.takenoteapp.data.remote.BasicAuthInterceptor
 import com.example.lio.takenoteapp.other.Constants.KEY_LOGGED_IN_EMAIL
 import com.example.lio.takenoteapp.other.Constants.KEY_PASSWORD
+import com.example.lio.takenoteapp.other.Constants.NO_EMAIL
+import com.example.lio.takenoteapp.other.Constants.NO_PASSWORD
 import com.example.lio.takenoteapp.other.Status
 import com.example.lio.takenoteapp.ui.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,6 +36,10 @@ class AuthFragment : BaseFragment(R.layout.fragment_auth) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        if(isLoggedIn()) {
+            authenticateApi(curEmail ?: "", curPassword ?: "")
+            redirectLogin()
+        }
 
         requireActivity().requestedOrientation = SCREEN_ORIENTATION_PORTRAIT
         subscribeToObservers()
@@ -52,6 +58,12 @@ class AuthFragment : BaseFragment(R.layout.fragment_auth) {
             viewModel.login(email, password)
         }
 
+    }
+
+    private fun isLoggedIn(): Boolean {
+        curEmail = sharedPref.getString(KEY_LOGGED_IN_EMAIL, NO_EMAIL) ?: NO_EMAIL
+        curPassword = sharedPref.getString(KEY_PASSWORD, NO_PASSWORD) ?: NO_PASSWORD
+        return curEmail != NO_EMAIL && curPassword != NO_PASSWORD
     }
 
     private fun authenticateApi(email: String, password: String) {
