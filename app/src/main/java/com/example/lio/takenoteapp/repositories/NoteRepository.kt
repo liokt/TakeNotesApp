@@ -2,11 +2,15 @@ package com.example.lio.takenoteapp.repositories
 
 import android.app.Application
 import com.example.lio.takenoteapp.data.local.NoteDao
+import com.example.lio.takenoteapp.data.local.entities.Note
 import com.example.lio.takenoteapp.data.remote.NoteApi
 import com.example.lio.takenoteapp.data.remote.request.AccountRequest
 import com.example.lio.takenoteapp.other.Resource
+import com.example.lio.takenoteapp.other.checkForInternetConnection
+import com.example.lio.takenoteapp.other.networkBoundResource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class NoteRepository @Inject constructor(
@@ -38,5 +42,24 @@ class NoteRepository @Inject constructor(
         } catch (e: Exception) {
             Resource.error("Couldn't connect to the servers. Check your internet connection", null)
         }
+    }
+
+    fun getAllNotes(): Flow<Resource<List<Note>>> {
+        return networkBoundResource(
+            query = {
+                noteDao.getAllNotes()
+            },
+            fetch = {
+                noteApi.getNotes()
+            },
+            saveFetchResult = { response ->
+                response.body()?.let{
+                    //insert notes in database
+                }
+            },
+            shouldFetch = {
+                checkForInternetConnection(context)
+            }
+        )
     }
 }
