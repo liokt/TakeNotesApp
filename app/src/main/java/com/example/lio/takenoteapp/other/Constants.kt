@@ -12,4 +12,6 @@ object Constants {
 
     const val NO_EMAIL = "NO_EMAIL"
     const val NO_PASSWORD = "NO_PASSWORD"
+
+    const val DEFAULT_NOTE_COLOR = "FFA500"
 }
