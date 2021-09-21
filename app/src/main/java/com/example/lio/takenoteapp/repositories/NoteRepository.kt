@@ -2,9 +2,11 @@ package com.example.lio.takenoteapp.repositories
 
 import android.app.Application
 import com.example.lio.takenoteapp.data.local.NoteDao
+import com.example.lio.takenoteapp.data.local.entities.LocallyDeletedNoteID
 import com.example.lio.takenoteapp.data.local.entities.Note
 import com.example.lio.takenoteapp.data.remote.NoteApi
 import com.example.lio.takenoteapp.data.remote.request.AccountRequest
+import com.example.lio.takenoteapp.data.remote.request.DeleteNoteRequest
 import com.example.lio.takenoteapp.other.Resource
 import com.example.lio.takenoteapp.other.checkForInternetConnection
 import com.example.lio.takenoteapp.other.networkBoundResource
@@ -82,4 +84,22 @@ class NoteRepository @Inject constructor(
     }
 
     suspend fun getNoteById(noteID: String) = noteDao.getNoteById(noteID)
+
+    suspend fun deleteLocallyDeletedNoteID(deletedNoteID: String) {
+        noteDao.deleteLocallyDeletedNoteID(deletedNoteID)
+    }
+
+    suspend fun deleteNote(noteID: String) {
+        val response = try {
+            noteApi.deleteNote(DeleteNoteRequest(noteID))
+        } catch (e: Exception) {
+            null
+        }
+        noteDao.deleteNoteById(noteID)
+        if(response == null || !response.isSuccessful) {
+            noteDao.insertLocallyDeletedNoteID(LocallyDeletedNoteID(noteID))
+        } else {
+            deleteLocallyDeletedNoteID(noteID)
+        }
+    }
 }
