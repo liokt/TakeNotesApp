@@ -6,6 +6,7 @@ import com.example.lio.takenoteapp.data.local.entities.LocallyDeletedNoteID
 import com.example.lio.takenoteapp.data.local.entities.Note
 import com.example.lio.takenoteapp.data.remote.NoteApi
 import com.example.lio.takenoteapp.data.remote.request.AccountRequest
+import com.example.lio.takenoteapp.data.remote.request.AddOwnerRequest
 import com.example.lio.takenoteapp.data.remote.request.DeleteNoteRequest
 import com.example.lio.takenoteapp.other.Resource
 import com.example.lio.takenoteapp.other.checkForInternetConnection
@@ -120,4 +121,19 @@ class NoteRepository @Inject constructor(
             deleteLocallyDeletedNoteID(noteID)
         }
     }
+
+    suspend fun addOwnerToNote(owner: String, noteID: String) = withContext(Dispatchers.IO) {
+        try {
+            val response = noteApi.addOwnerToNote(AddOwnerRequest(owner, noteID))
+            if (response.isSuccessful && response.body()!!.successful) {
+                Resource.success(response.body()?.message)
+            } else {
+                Resource.error(response.body()?.message ?: response.message(), null)
+            }
+        } catch (e: Exception) {
+            Resource.error("Couldn't connect to the servers. Check your internet connection", null)
+        }
+    }
+
+    fun observeNoteByID(noteID: String) = noteDao.observeNoteById(noteID)
 }
