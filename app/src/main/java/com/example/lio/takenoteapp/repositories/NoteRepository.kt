@@ -13,6 +13,7 @@ import com.example.lio.takenoteapp.other.networkBoundResource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.Flow
+import retrofit2.Response
 import javax.inject.Inject
 
 class NoteRepository @Inject constructor(
@@ -46,18 +47,35 @@ class NoteRepository @Inject constructor(
         }
     }
 
+    private var curNotesResponse: Response<List<Note>>? = null
+
+    suspend fun syncNotes() {
+        val locallyDeletedNotesIDs = noteDao.getAllLocallyDeletedNoteIDs()
+        locallyDeletedNotesIDs.forEach { id -> deleteNote(id.deletedNoteID) }
+
+        val unSyncedNotes = noteDao.getAllUnSyncedNotes()
+        unSyncedNotes.forEach { note -> insertNote(note) }
+
+        curNotesResponse = noteApi.getNotes()
+        curNotesResponse?.body()?.let { notes ->
+            noteDao.deleteAllNotes()
+            insertNotes(notes.onEach { note -> note.isSynced = true })
+        }
+    }
+
     fun getAllNotes(): Flow<Resource<List<Note>>> {
         return networkBoundResource(
             query = {
                 noteDao.getAllNotes()
             },
             fetch = {
-                noteApi.getNotes()
+                syncNotes()
+                curNotesResponse
             },
             saveFetchResult = { response ->
-                response.body()?.let {
+                response?.body()?.let {
                     //insert notes in database
-                    insertNotes(it)
+                    insertNotes(it.onEach { note -> note.isSynced = true })
                 }
             },
             shouldFetch = {

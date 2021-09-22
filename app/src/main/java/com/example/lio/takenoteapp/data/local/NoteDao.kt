@@ -30,6 +30,9 @@ interface NoteDao {
     @Query("SELECT * FROM notes ORDER BY date DESC")
     fun getAllNotes(): Flow<List<Note>>
 
+    @Query("DELETE FROM notes")
+    suspend fun deleteAllNotes()
+
     @Query("SELECT * FROM notes WHERE isSynced = 0")
     suspend fun getAllUnSyncedNotes(): List<Note>
 
